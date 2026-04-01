@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes.chat import router as chat_router
 from app.api.routes.upload import router as upload_router
+from app.api.routes.feedback import router as feedback_router
 from app.core.config import settings
 from app.core.logger import logger
 from app.core.tracing import RequestTracingMiddleware
@@ -38,6 +39,7 @@ app.add_middleware(
 # ── Routers ───────────────────────────────────────────────────────────────────
 app.include_router(upload_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
+app.include_router(feedback_router, prefix="/api")
 
 # ── Health check ──────────────────────────────────────────────────────────────
 @app.get("/", response_model=HealthResponse, tags=["health"])

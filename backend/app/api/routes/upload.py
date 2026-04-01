@@ -1,12 +1,14 @@
 """
 upload.py — Document upload and processing route.
-POST /api/upload/
+Supports multiple files via the 'files' parameter and deletion.
 """
 
 from __future__ import annotations
 
 import os
 import shutil
+from typing import List
+from datetime import datetime
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
@@ -16,6 +18,7 @@ from app.models.schemas import UploadResponse
 from app.services.document_processor import extract_text_from_file
 from app.services.text_chunker import split_text_into_chunks
 from app.services.vector_store import store_chunks
+from starlette.concurrency import run_in_threadpool
 
 router = APIRouter(prefix="/upload", tags=["upload"])
 
@@ -24,69 +27,94 @@ _ALLOWED_EXTENSIONS = {".pdf", ".txt", ".docx"}
 # Ensure upload directory exists at startup
 os.makedirs(settings.upload_dir, exist_ok=True)
 
-
-@router.post("/", response_model=UploadResponse)
-async def upload_document(file: UploadFile = File(...)) -> UploadResponse:
+@router.post("/", response_model=List[UploadResponse])
+async def upload_documents(files: List[UploadFile] = File(...)) -> List[UploadResponse]:
     """
-    Upload a document (PDF / TXT / DOCX), extract text, chunk it, and
-    store embeddings in ChromaDB. Returns processing statistics.
+    Upload multiple documents, extract text, chunk them, and
+    store embeddings in ChromaDB.
     """
-    # ── Validate file type ────────────────────────────────────────────────────
-    ext = os.path.splitext(file.filename or "")[1].lower()
-    if ext not in _ALLOWED_EXTENSIONS:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unsupported file type '{ext}'. Allowed: {_ALLOWED_EXTENSIONS}",
-        )
+    results = []
+    
+    for file in files:
+        ext = os.path.splitext(file.filename or "")[1].lower()
+        if ext not in _ALLOWED_EXTENSIONS:
+            logger.warning(f"Unsupported file type skipping: {file.filename}")
+            continue
 
-    file_path = os.path.join(settings.upload_dir, file.filename)
+        file_path = os.path.join(settings.upload_dir, file.filename)
 
-    try:
-        # ── Save file ─────────────────────────────────────────────────────────
-        print(f"[DEBUG] Saving file: {file.filename}...")
-        with open(file_path, "wb") as buf:
-            shutil.copyfileobj(file.file, buf)
-        logger.info(f"Saved upload: '{file.filename}' ({os.path.getsize(file_path)} bytes)")
+        try:
+            # 1. Save file
+            with open(file_path, "wb") as buf:
+                shutil.copyfileobj(file.file, buf)
+            
+            # 2. Extract text
+            text = extract_text_from_file(file_path)
+            
+            if not text.strip():
+                logger.warning(f"No text extracted from {file.filename}")
+                continue
 
-        # ── Extract text ──────────────────────────────────────────────────────
-        print(f"[DEBUG] Starting text extraction for {file.filename}...")
-        text = extract_text_from_file(file_path)
-        print(f"[DEBUG] Extraction complete: {len(text)} characters found.")
-        
-        if not text.strip():
-            print("[DEBUG] No text found, raising 422.")
-            raise HTTPException(
-                status_code=422,
-                detail="Could not extract any text from the file. Is it an image-only PDF?",
-            )
+            # 3. Chunk
+            chunks = split_text_into_chunks(text)
+            
+            # 4. Embed + store
+            stored = await run_in_threadpool(store_chunks, chunks, document_name=file.filename)
 
-        # ── Chunk ─────────────────────────────────────────────────────────────
-        print("[DEBUG] Splitting into chunks...")
-        chunks = split_text_into_chunks(text)
-        print(f"[DEBUG] Created {len(chunks)} chunks.")
-        
-        # ── Embed + store (Run in a thread to prevent blocking) ────────────────
-        from starlette.concurrency import run_in_threadpool
-        print("[DEBUG] Sending to Vector Store (Embedding)...")
-        stored = await run_in_threadpool(store_chunks, chunks, document_name=file.filename)
-        print(f"[DEBUG] Successfully stored {stored} chunks.")
+            results.append(UploadResponse(
+                filename=file.filename,
+                characters_extracted=len(text),
+                chunks_created=len(chunks),
+                chunks_stored=stored,
+                message="Processed successfully ✅"
+            ))
 
-        print("[DEBUG] Sending Response...")
-        return UploadResponse(
-            filename=file.filename,
-            characters_extracted=len(text),
-            chunks_created=len(chunks),
-            chunks_stored=stored,
-            extracted_text=text[:5000],  # Return up to 5k characters to keep JSON light
-            message="Document uploaded and processed successfully ✅",
-        )
+        except Exception as exc:
+            logger.error(f"Upload failed for '{file.filename}': {exc}")
 
-    except HTTPException:
-        raise  # pass through already-formatted errors
+    if not results:
+        raise HTTPException(status_code=422, detail="No valid documents were processed.")
 
-    except Exception as exc:
-        logger.error(f"Upload failed for '{file.filename}': {exc}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Processing failed: {exc}",
-        )
+    return results
+
+@router.get("/list")
+async def list_documents():
+    """Returns a list of all processed documents with metadata."""
+    from app.services.vector_store import get_document_stats
+    stats = get_document_stats()
+    
+    # ── Map stats with file system upload dates ──────────────────────────────
+    files = []
+    if os.path.exists(settings.upload_dir):
+        for f in os.listdir(settings.upload_dir):
+            if os.path.isfile(os.path.join(settings.upload_dir, f)):
+                # Match filename from vector store stats
+                doc_stats = next((s for s in stats if s["filename"] == f), {"chunks": 0})
+                
+                files.append({
+                    "filename": f,
+                    "uploaded_at": datetime.fromtimestamp(os.path.getmtime(os.path.join(settings.upload_dir, f))).isoformat(),
+                    "chunks": doc_stats["chunks"]
+                })
+    return {"documents": files}
+
+@router.delete("/{filename}")
+async def delete_document_route(filename: str):
+    """Deletes a document from the filesystem and vector store."""
+    from app.services.vector_store import delete_document
+    
+    file_path = os.path.join(settings.upload_dir, filename)
+    
+    # 1. Delete from filesystem first
+    if os.path.exists(file_path):
+        try:
+            os.remove(file_path)
+            logger.info(f"Deleted {filename} from disk ✅")
+        except Exception as e:
+            logger.error(f"Failed to delete file from disk: {e}")
+            raise HTTPException(status_code=500, detail=f"File is locked: {e}")
+
+    # 2. Delete from vector store
+    v_success = delete_document(filename)
+    
+    return {"message": f"Successfully deleted {filename}", "vector_store": v_success}

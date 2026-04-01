@@ -53,7 +53,7 @@ async def ask_question(
         initial_state = {
             "session_id": session_id,
             "question": question,
-            "source": source,
+            "source": request.source,
             "agent_trace": [],
             "history": get_history(session_id),
             "retry_count": 0,
@@ -76,18 +76,19 @@ async def ask_question(
             
             # If the generator finished, we can stream the tokens 
             # (In this phase we send the whole answer once generated)
-            # If the generator finished, we stream the tokens for the live feel
+            # If the generator finished, we stream the answer safely as a JSON-encoded string
             if node_name == "generator" and "answer" in delta:
                 answer = delta["answer"]
-                # CRITICAL FIX: Split by newlines so SSE doesn't break
-                lines = answer.split("\n")
-                for i, line_text in enumerate(lines):
-                    # Re-add the newline character so the UI renders it
-                    suffix = "\n" if i < len(lines) - 1 else ""
-                    yield f"data: [TOKEN]{line_text}{suffix}\n\n"
+                # We send the whole answer as one safely encoded token sweep
+                # This prevents raw \n from breaking the SSE protocol
+                safe_answer = json.dumps(answer)
+                yield f"data: [TOKEN]{safe_answer}\n\n"
             
-            # Keep track of the final state to get the full result
-            final_state = delta
+            # Keep track of the final cumulative state
+            if not final_state:
+                final_state = delta.copy()
+            else:
+                final_state.update(delta)
 
         # ── Final Persistence ──────────────────────────────────────────────────
         if final_state and "answer" in final_state:

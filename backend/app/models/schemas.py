@@ -37,6 +37,10 @@ class QuestionRequest(BaseModel):
         max_length=2000,
         description="The user's question about the uploaded documents.",
     )
+    source: Optional[str] = Field(
+        default=None,
+        description="Specific document filename to restrict the search to."
+    )
 
 
 class ChunkResult(BaseModel):
@@ -85,9 +89,9 @@ class FeedbackRequest(BaseModel):
     answer: str
     rating: int = Field(
         ...,
-        ge=-1,
-        le=1,
-        description="1 = thumbs up, -1 = thumbs down, 0 = neutral",
+        ge=1,
+        le=5,
+        description="User rating from 1 (poor) to 5 (excellent)",
     )
     comment: Optional[str] = Field(
         default=None,
@@ -112,7 +116,7 @@ class DailyMetric(BaseModel):
     avg_faithfulness: float
     avg_relevance: float
     total_questions: int
-    positive_rate: float
+    avg_rating: float                   # 1.0 to 5.0
 
 
 class MetricsResponse(BaseModel):
@@ -120,7 +124,7 @@ class MetricsResponse(BaseModel):
     total_questions: int
     avg_faithfulness: float
     avg_relevance: float
-    positive_feedback_rate: float
+    avg_user_rating: float              # 1.0 to 5.0 overall
     avg_retry_count: float
     last_updated: Optional[datetime] = None
     daily_history: List[DailyMetric] = []

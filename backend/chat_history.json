@@ -1,0 +1,44 @@
+{
+  "default": [
+    {
+      "role": "user",
+      "content": "summarize the pdf"
+    },
+    {
+      "role": "assistant",
+      "content": "\nSorry, I encountered an error while generating the answer. Please try again."
+    },
+    {
+      "role": "user",
+      "content": "summarize"
+    },
+    {
+      "role": "assistant",
+      "content": "\nSorry, I encountered an error while generating the answer. Please try again."
+    },
+    {
+      "role": "user",
+      "content": "summarize"
+    },
+    {
+      "role": "assistant",
+      "content": "\nSorry, I encountered an error while generating the answer. Please try again."
+    },
+    {
+      "role": "user",
+      "content": "summarize"
+    },
+    {
+      "role": "assistant",
+      "content": "The document contains information about a candidate's academic background, technical skills, achievements, and publications.\n\nThe candidate has completed their Bachelor of Technology in Computer Science and Engineering from Lovely Professional University, with a CGPA of 8.67.\n\nTheir technical skills include programming languages such as C++, Python, HTML, CSS, and JavaScript, as well as developer tools like Android Studio, Git, and Visual Studio Code.\n\nThe candidate has achieved several notable accomplishments, including:\n\n- Securing an AIR 997 in GATE 2024 (Data Science and Artificial Intelligence) out of 40,000 candidates.\n- Winning the Gear Up \u2013 Smart India Hackathon 2023 for pioneering a sustainable and energy-efficient public lighting system.\n\nTheir publications include:\n\n- \"Ultra-Wideband Technology for Healthcare Monitoring: A Machine Learning Approach\" in the 2024 International Conference on Cybernation and Computation (CYBERCOM) by IEEE.\n- \"IoT-Based Smart Farming System using Machine Learning\" in the 2024 International Journal for Research in Applied Science and Engineering Technology (iJRASET).\n\nThe candidate has also worked on several projects, including a Beacon-Based Indoor Location Tracking System and an IoT-Based Smart Farming System using Machine Learning."
+    },
+    {
+      "role": "user",
+      "content": "summarize"
+    },
+    {
+      "role": "assistant",
+      "content": "The document contains information about a candidate's academic background, technical skills, achievements, and publications.\n\nThe candidate has completed their Bachelor of Technology in Computer Science and Engineering from Lovely Professional University, with a CGPA of 8.67.\n\nTheir technical skills include programming languages such as C++, Python, HTML, CSS, and JavaScript, as well as developer tools like Android Studio, Git, and Visual Studio Code.\n\nThe candidate has achieved several notable accomplishments, including:\n\n- Securing an AIR 997 in GATE 2024 (Data Science and Artificial Intelligence) out of 40,000 candidates.\n- Winning the Gear Up \u2013 Smart India Hackathon 2023 for pioneering a sustainable and energy-efficient public lighting system.\n\nTheir publications include:\n\n- \"Ultra-Wideband Technology for Healthcare Monitoring: A Machine Learning Approach\" in the 2024 International Conference on Cybernation and Computation (CYBERCOM) by IEEE.\n- \"IoT-Based Smart Farming System using Machine Learning\" in the 2024 International Journal for Research in Applied Science and Engineering Technology (iJRASET).\n\nThe candidate has also worked on several projects, including a Beacon-Based Indoor Location Tracking System and an IoT-Based Smart Farming System using Machine Learning.\n\nTheir academic background includes:\n\n- Bachelor of Technology in Computer Science and Engineering from Lovely Professional University, with a CGPA of 8.67.\n- Intermediate Assisi Convent School, Etah, with a percentage of 84.2%.\n- High School Assisi Convent School, Etah, with a percentage of 90.6%."
+    }
+  ]
+}

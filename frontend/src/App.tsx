@@ -9,6 +9,8 @@ import React, { useCallback } from 'react';
 import ChatArea from './components/ChatArea';
 import DocumentSidebar from './components/DocumentSidebar';
 import AgentTracePanel from './components/AgentTracePanel';
+import MetricsDashboard from './components/MetricsDashboard';
+import { AnimatePresence } from 'framer-motion';
 
 // ── Hooks ───────────────────────────────────────────────────────────────────
 import { useAgentStream } from './hooks/useAgentStream';
@@ -17,6 +19,7 @@ import { useMetrics } from './hooks/useMetrics';
 
 const App: React.FC = () => {
   const [selectedDoc, setSelectedDoc] = React.useState<string | null>(null);
+  const [isDashboardOpen, setIsDashboardOpen] = React.useState(false);
 
   // Logic hooks
   const { 
@@ -36,6 +39,7 @@ const App: React.FC = () => {
   
   const { 
     metrics, 
+    improvements,
     submitFeedback 
   } = useMetrics();
 
@@ -75,11 +79,13 @@ const App: React.FC = () => {
       <DocumentSidebar 
         documents={documents}
         metrics={metrics}
+        improvements={improvements}
         onUpload={handleUpload}
         onDelete={deleteDocument}
         isUploading={isUploading}
         selectedDoc={selectedDoc}
         onSelectDoc={setSelectedDoc}
+        onOpenDashboard={() => setIsDashboardOpen(true)}
       />
 
       {/* ── Center Panel: Conversational AI Window ────────────────────────────── */}
@@ -96,6 +102,16 @@ const App: React.FC = () => {
         trace={currentTrace}
         isStreaming={isStreaming}
       />
+
+      <AnimatePresence>
+        {isDashboardOpen && (
+          <MetricsDashboard 
+            metrics={metrics} 
+            improvements={improvements}
+            onClose={() => setIsDashboardOpen(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

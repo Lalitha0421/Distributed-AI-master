@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import type { DocumentInfo } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : (import.meta.env.VITE_API_URL.endsWith('/') ? `${import.meta.env.VITE_API_URL}api` : `${import.meta.env.VITE_API_URL}/api`)) : 'http://localhost:8000/api';
 
 export const useDocuments = () => {
   const [documents, setDocuments] = useState<DocumentInfo[]>([]);

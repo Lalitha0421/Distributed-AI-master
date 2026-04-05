@@ -23,6 +23,7 @@ METRICS:
 1. FAITHFULNESS: Is every claim in the answer backed by the context provided? If the answer hallucinates info not in context, score low.
 2. RELEVANCE: Does the answer directly and accurately address the user's question?
 3. CONTEXT_PRECISION: Are the retrieved document chunks actually relevant and useful for answering the question?
+4. ANSWER_ACCURACY (if GROUND TRUTH provided): How similar is the answer to the GROUND TRUTH?
 
 OUTPUT FORMAT: Return ONLY a valid JSON object.
 
@@ -31,12 +32,14 @@ Example Output:
     "faithfulness": 0.95,
     "relevance": 1.0,
     "context_precision": 0.85,
+    "answer_accuracy": 0.9,
     "explanation": "Brief reasoning for these scores."
 }}
 
 ---
 QUESTION: {question}
 CONTEXT: {context}
+GROUND TRUTH: {ground_truth}
 ANSWER: {answer}
 """
 
@@ -44,12 +47,14 @@ class EvaluationResult(BaseModel):
     faithfulness: float = Field(ge=0.0, le=1.0)
     relevance: float = Field(ge=0.0, le=1.0)
     context_precision: float = Field(ge=0.0, le=1.0)
+    answer_accuracy: float = Field(default=0.0, ge=0.0, le=1.0)
     explanation: str
 
 async def evaluate_rag_response(
     question: str,
     answer: str,
     context: str,
+    ground_truth: str = "Not provided"
 ) -> Optional[EvaluationResult]:
     """
     Asks the LLM to judge the quality of the generated answer and retrieved context.
@@ -69,6 +74,7 @@ async def evaluate_rag_response(
                 {"role": "user", "content": _EVAL_PROMPT.format(
                     question=question,
                     context=trimmed_context,
+                    ground_truth=ground_truth,
                     answer=answer
                 )}
             ],
@@ -76,14 +82,16 @@ async def evaluate_rag_response(
             response_format={"type": "json_object"}
         )
 
-        content = response.choices[0].message.content
-        data = json.loads(content)
-        
-        # Add basic validation / defaults if missing
+        # Robust extraction with type enforcement (handles null values from LLM)
+        def _get_float(key: str) -> float:
+            val = data.get(key, 0.0)
+            return float(val) if val is not None else 0.0
+
         result = EvaluationResult(
-            faithfulness=data.get("faithfulness", 0.0),
-            relevance=data.get("relevance", 0.0),
-            context_precision=data.get("context_precision", 0.0),
+            faithfulness=_get_float("faithfulness"),
+            relevance=_get_float("relevance"),
+            context_precision=_get_float("context_precision"),
+            answer_accuracy=_get_float("answer_accuracy"),
             explanation=data.get("explanation", "No explanation provided.")
         )
         

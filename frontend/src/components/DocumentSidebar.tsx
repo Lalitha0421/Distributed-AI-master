@@ -1,24 +1,28 @@
 import React from 'react';
-import type { MetricsData, DocumentInfo } from '../types';
+import type { MetricsData, DocumentInfo, ImprovementsData } from '../types';
 
 interface DocumentSidebarProps {
   documents: DocumentInfo[];
   metrics: MetricsData | null;
+  improvements: ImprovementsData | null;
   onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onDelete: (filename: string) => void;
   isUploading: boolean;
   selectedDoc: string | null;
   onSelectDoc: (filename: string | null) => void;
+  onOpenDashboard: () => void;
 }
 
 const DocumentSidebar: React.FC<DocumentSidebarProps> = ({ 
   documents, 
   metrics, 
+  improvements,
   onUpload, 
   onDelete,
   isUploading,
   selectedDoc,
-  onSelectDoc
+  onSelectDoc,
+  onOpenDashboard
 }) => {
   return (
     <nav className="sidebar-panel border-r border-[var(--border)] bg-[var(--bg-glass)] backdrop-blur-xl flex flex-col h-full overflow-hidden">
@@ -39,7 +43,7 @@ const DocumentSidebar: React.FC<DocumentSidebarProps> = ({
               Documents
             </h3>
             <label className="cursor-pointer group">
-              <input type="file" className="hidden" onChange={onUpload} accept=".pdf,.docx,.txt" multiple />
+              <input type="file" className="hidden" onChange={onUpload} accept=".pdf,.docx,.txt,.md" multiple />
               <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-[var(--bg-glass-heavy)] border border-[var(--border)] group-hover:bg-[var(--accent-primary)] group-hover:text-white transition-all text-xs">
                 {isUploading ? <span className="animate-spin w-3 h-3 border-2 border-current border-t-transparent rounded-full" /> : <span>+</span>}
                 Upload
@@ -149,9 +153,54 @@ const DocumentSidebar: React.FC<DocumentSidebarProps> = ({
             </div>
           </section>
         )}
+
+        {/* Improvements Section — New Phase 5 Feature */}
+        {improvements && improvements.insights.length > 0 && (
+          <section className="space-y-4 pt-6 border-t border-[var(--border)]">
+            <h3 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+              Self-Improvement Insights
+            </h3>
+            <div className="space-y-3">
+              {improvements.insights.map((insight, idx) => (
+                <div key={idx} className="p-3 rounded-lg bg-[var(--bg-glass-heavy)] border border-[var(--border)] group/insight hover:border-[var(--accent-primary)] transition-all">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-bold uppercase text-[var(--text-dim)]">{insight.metric.replace('_', ' ')}</span>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase transition-all ${
+                      insight.trend === 'improving' ? 'bg-green-500/20 text-green-400' :
+                      insight.trend === 'declining' ? 'bg-red-500/20 text-red-400' :
+                      'bg-blue-500/20 text-blue-400'
+                    }`}>
+                      {insight.trend}
+                    </span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-[var(--text-primary)]">
+                    {insight.suggestion}
+                  </p>
+                  {insight.auto_applied && (
+                    <div className="mt-2 flex items-center gap-1.5 text-[9px] text-[var(--accent-green)] font-medium">
+                      <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></div>
+                      Auto-applied fix
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
 
       <div className="p-4 border-t border-[var(--border)] bg-black/40">
+        <button 
+          onClick={onOpenDashboard}
+          className="w-full mb-6 p-3 rounded-xl bg-gradient-to-r from-[var(--accent-primary)]/20 to-[var(--accent-secondary)]/20 border border-[var(--accent-primary)]/30 hover:border-[var(--accent-primary)] transition-all flex items-center justify-between group/btn"
+        >
+          <div className="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--accent-primary)]"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            <span className="text-sm font-bold text-white">Full Analytics</span>
+          </div>
+          <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-[var(--accent-primary)] font-bold group-hover/btn:scale-110 transition-transform">GO →</span>
+        </button>
+
         <div className="flex items-center gap-2 text-xs text-[var(--text-muted)] group">
           <div className="w-2 h-2 rounded-full bg-[var(--accent-green)] shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
           Status: <span className="text-[var(--text-primary)]">System Healthy</span>

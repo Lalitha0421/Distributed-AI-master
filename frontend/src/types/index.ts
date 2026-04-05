@@ -48,6 +48,19 @@ export interface MetricsData {
   daily_history: DailyMetric[];
 }
 
+export interface ImprovementInsight {
+  metric: string;
+  trend: "improving" | "declining" | "stable" | string;
+  suggestion: string;
+  auto_applied: boolean;
+  confidence_score: number;
+}
+
+export interface ImprovementsData {
+  insights: ImprovementInsight[];
+  last_analyzed: string;
+}
+
 export interface DocumentInfo {
   filename: string;
   uploaded_at: string;

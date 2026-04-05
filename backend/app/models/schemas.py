@@ -130,6 +130,21 @@ class MetricsResponse(BaseModel):
     daily_history: List[DailyMetric] = []
 
 
+class ImprovementInsight(BaseModel):
+    """A single automated system improvement suggestion."""
+    metric: str
+    trend: str                           # "improving" | "declining" | "stable"
+    suggestion: str                      # Human-readable improvement action
+    auto_applied: bool                   # Was this automatically adjusted?
+    confidence_score: float              # 0.0 to 1.0
+
+
+class ImprovementsResponse(BaseModel):
+    """Returned by GET /api/feedback/improvements/"""
+    insights: List[ImprovementInsight]
+    last_analyzed: datetime
+
+
 # ──────────────────────────────────────────────
 # Health
 # ──────────────────────────────────────────────

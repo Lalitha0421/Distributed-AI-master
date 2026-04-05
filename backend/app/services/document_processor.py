@@ -15,10 +15,10 @@ from pypdf import PdfReader
 from app.core.config import settings
 from app.core.logger import logger
 
-pytesseract.pytesseract.tesseract_cmd = settings.tesseract_cmd
-POPPLER_PATH: str = settings.poppler_path
+pytesseract.pytesseract.tesseract_cmd = settings.get_tesseract_cmd
+POPPLER_PATH: str = settings.get_poppler_path
 
-_SUPPORTED_EXTENSIONS = {".pdf", ".txt", ".docx"}
+_SUPPORTED_EXTENSIONS = {".pdf", ".txt", ".docx", ".md"}
 
 def _clean_text(text: str) -> str:
     if not text:
@@ -37,7 +37,7 @@ def extract_text_from_file(file_path: str) -> str:
 
     logger.info(f"Extracting text from: {os.path.basename(file_path)}")
 
-    if ext == ".txt":
+    if ext in {".txt", ".md"}:
         with open(file_path, "r", encoding="utf-8", errors="replace") as fh:
             text = fh.read()
     elif ext == ".docx":

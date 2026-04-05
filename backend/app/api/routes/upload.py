@@ -22,7 +22,7 @@ from starlette.concurrency import run_in_threadpool
 
 router = APIRouter(prefix="/upload", tags=["upload"])
 
-_ALLOWED_EXTENSIONS = {".pdf", ".txt", ".docx"}
+_ALLOWED_EXTENSIONS = {".pdf", ".txt", ".docx", ".md"}
 
 # Ensure upload directory exists at startup
 os.makedirs(settings.upload_dir, exist_ok=True)

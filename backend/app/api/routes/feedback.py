@@ -12,12 +12,14 @@ from fastapi import APIRouter, HTTPException
 from app.core.logger import logger
 from app.models.schemas import (
     FeedbackRequest, 
-    FeedbackResponse, 
+    FeedbackResponse,
     MetricsResponse, 
-    DailyMetric
+    DailyMetric,
+    ImprovementsResponse
 )
 from app.services.feedback_store import feedback_store
 from app.services.evaluator import evaluate_rag_response
+from app.services.self_improver import self_improver
 
 router = APIRouter(prefix="/feedback", tags=["feedback"])
 
@@ -98,4 +100,17 @@ async def get_system_metrics() -> MetricsResponse:
         avg_retry_count=data["avg_retry_count"],
         last_updated=datetime.now(),
         daily_history=daily_history
+    )
+
+
+@router.get("/improvements", response_model=ImprovementsResponse)
+async def get_system_improvements(days: int = 7) -> ImprovementsResponse:
+    """
+    Fetch automated improvement insights based on feedback trends.
+    """
+    insights = await self_improver.analyze_feedback_trends(days=days)
+    
+    return ImprovementsResponse(
+        insights=insights,
+        last_analyzed=datetime.now()
     )

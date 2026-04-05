@@ -1,0 +1,47 @@
+[
+  {
+    "question": "Can UWB technology be used in various applications beyond IoT-based smart farming?",
+    "ground_truth": "Yes, as mentioned in the document, UWB technology has been leveraged in various applications including cardiac monitoring, tremor analysis, ADHD assessment, and wearable patient tracking systems.",
+    "metadata": {
+      "source_chunk": "snr_resume.pdf",
+      "auto_generated": true,
+      "timestamp": "1775287743.194078"
+    }
+  },
+  {
+    "question": "What distinguishes an LLM that calls functions from an agent that uses tools, in terms of tool-calling behavior?",
+    "ground_truth": "The distinction lies in the agent's ability to decide which tool to call based on context, while an LLM that calls functions does not exhibit this level of autonomy.",
+    "metadata": {
+      "source_chunk": "implementation_plan2.md",
+      "auto_generated": true,
+      "timestamp": "1775287743.194078"
+    }
+  },
+  {
+    "question": "What is the purpose of the stream_graph_events function in the given code?",
+    "ground_truth": "The stream_graph_events function is used to stream graph events to the client, including agent trace updates, answer tokens, and the final state of the graph after it completes.",
+    "metadata": {
+      "source_chunk": "implementation_plan2.md",
+      "auto_generated": true,
+      "timestamp": "1775287743.194078"
+    }
+  },
+  {
+    "question": "What AI tools are used in the IoT-Based Smart Farming System?",
+    "ground_truth": "The system uses RandomForest classifier and YOLO for image detection.",
+    "metadata": {
+      "source_chunk": "snr_resume.pdf",
+      "auto_generated": true,
+      "timestamp": "1775287743.194078"
+    }
+  },
+  {
+    "question": "What is the key difference between a learning project and a production project in the context of software development?",
+    "ground_truth": "The presence of dead code is the #1 sign of a learning project vs a production project.",
+    "metadata": {
+      "source_chunk": "implementation_plan2.md",
+      "auto_generated": true,
+      "timestamp": "1775287743.194078"
+    }
+  }
+]

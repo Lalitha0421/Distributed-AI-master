@@ -5,22 +5,27 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import axios from 'axios';
-import type { MetricsData } from '../types';
+import type { MetricsData, ImprovementsData } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : (import.meta.env.VITE_API_URL.endsWith('/') ? `${import.meta.env.VITE_API_URL}api` : `${import.meta.env.VITE_API_URL}/api`)) : 'http://localhost:8000/api';
 
 export const useMetrics = () => {
   const [metrics, setMetrics] = useState<MetricsData | null>(null);
+  const [improvements, setImprovements] = useState<ImprovementsData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   // 1. Fetch overall metrics ──────────────────────────────────────────────────
   const fetchMetrics = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/feedback/metrics`);
-      setMetrics(response.data);
+      const [metricsRes, improvementsRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/feedback/metrics`),
+        axios.get(`${API_BASE_URL}/feedback/improvements`)
+      ]);
+      setMetrics(metricsRes.data);
+      setImprovements(improvementsRes.data);
     } catch (err) {
-      console.error("Failed to fetch metrics:", err);
+      console.error("Failed to fetch dashboard data:", err);
     } finally {
       setIsLoading(false);
     }
@@ -51,5 +56,5 @@ export const useMetrics = () => {
     }
   }, [fetchMetrics]);
 
-  return { metrics, isLoading, submitFeedback, refresh: fetchMetrics };
+  return { metrics, improvements, isLoading, submitFeedback, refresh: fetchMetrics };
 };

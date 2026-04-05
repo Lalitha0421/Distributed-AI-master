@@ -30,6 +30,7 @@ class FeedbackStore:
                 faithfulness REAL,
                 relevance REAL,
                 context_precision REAL,
+                answer_accuracy REAL,
                 user_rating INTEGER DEFAULT 0,  -- 1-5 (stars)
                 user_comment TEXT,
                 retry_count INTEGER DEFAULT 0,
@@ -50,6 +51,7 @@ class FeedbackStore:
         faithfulness: Optional[float] = None,
         relevance: Optional[float] = None,
         context_precision: Optional[float] = None,
+        answer_accuracy: Optional[float] = None,
         retry_count: int = 0,
         confidence: str = "medium"
     ) -> int:
@@ -59,12 +61,14 @@ class FeedbackStore:
                 cursor = conn.execute("""
                 INSERT INTO feedback (
                     session_id, question, answer, user_rating, user_comment, 
-                    faithfulness, relevance, context_precision, retry_count, confidence
+                    faithfulness, relevance, context_precision, answer_accuracy, 
+                    retry_count, confidence
                 ) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     session_id, question, answer, rating, comment,
-                    faithfulness, relevance, context_precision, retry_count, confidence
+                    faithfulness, relevance, context_precision, answer_accuracy, 
+                    retry_count, confidence
                 ))
                 conn.commit()
                 return cursor.lastrowid
@@ -84,6 +88,7 @@ class FeedbackStore:
                     COUNT(*) as total,
                     AVG(faithfulness) as avg_faith,
                     AVG(relevance) as avg_relev,
+                    AVG(answer_accuracy) as avg_acc,
                     AVG(NULLIF(user_rating, 0)) as avg_rating,
                     AVG(retry_count) as avg_retry
                 FROM feedback
@@ -95,21 +100,27 @@ class FeedbackStore:
                     DATE(timestamp) as date,
                     AVG(faithfulness) as avg_faithfulness,
                     AVG(relevance) as avg_relevance,
+                    AVG(answer_accuracy) as avg_accuracy,
                     COUNT(*) as total_questions,
                     AVG(NULLIF(user_rating, 0)) as avg_rating
                 FROM feedback
                 GROUP BY DATE(timestamp)
-                ORDER BY DATE(timestamp) ASC
+                ORDER BY DATE(timestamp) DESC
                 LIMIT 7
                 """).fetchall()
+
+                # Reverse history so it flows from oldest to newest in the chart
+                history_list = [dict(h) for h in history]
+                history_list.reverse()
 
                 return {
                     "total_questions": stats["total"] or 0,
                     "avg_faithfulness": round(stats["avg_faith"] or 0.0, 2),
                     "avg_relevance": round(stats["avg_relev"] or 0.0, 2),
+                    "avg_accuracy": round(stats["avg_acc"] or 0.0, 2),
                     "avg_user_rating": round(stats["avg_rating"] or 0.0, 1),
                     "avg_retry_count": round(stats["avg_retry"] or 0.0, 2),
-                    "daily_history": [dict(h) for h in history]
+                    "daily_history": history_list
                 }
         except Exception as e:
             logger.error(f"Failed to fetch metrics: {e}")

@@ -1,0 +1,149 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  /* Deep Midnight Design System */
+  --bg-base:       #080c14;   /* deep midnight navy */
+  --bg-card:       #0f1628;   /* card surface */
+  --bg-glass:      rgba(255, 255, 255, 0.04);
+  --bg-glass-heavy: rgba(255, 255, 255, 0.08);
+  
+  --accent-primary: #7c3aed;  /* electric indigo */
+  --accent-secondary: #06b6d4; /* cyan */
+  --accent-green:   #10b981;  /* emerald */
+  --accent-amber:   #f59e0b;  /* amber */
+  --accent-red:     #ef4444;  /* rose */
+  
+  --text-primary:  #f0f4ff;
+  --text-muted:    #94a3b8;
+  --text-dim:      #64748b;
+  
+  --border:        rgba(255, 255, 255, 0.1);
+  --border-bright: rgba(255, 255, 255, 0.2);
+  
+  --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Failsafe Layout — Ensures 3-panel UI even if Tailwind fails to load */
+html, body, #root {
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
+
+.layout-container {
+  display: flex !important;
+  flex-direction: row !important;
+  width: 100vw !important;
+  height: 100vh !important;
+}
+
+.sidebar-panel {
+  width: 320px !important;
+  min-width: 320px;
+  height: 100%;
+  border-right: 1px solid var(--border);
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+}
+
+.main-chat-area {
+  flex: 1 !important;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-base);
+  position: relative;
+}
+
+.trace-panel {
+  width: 360px !important;
+  min-width: 360px;
+  height: 100%;
+  border-left: 1px solid var(--border);
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Typography & Reset */
+* { box-sizing: border-box; }
+h1, h2, h3 { margin: 0; }
+
+/* Advanced Effects */
+.glass-panel {
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glow-indigo {
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Button Refinement */
+button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+button:hover {
+  filter: brightness(1.2);
+  transform: scale(1.02);
+}
+
+
+/* ── Markdown Readability ─────────────────────────────────────────────────── */
+.prose strong {
+  color: var(--accent-secondary);
+  font-weight: 700;
+}
+
+.prose h1, .prose h2, .prose h3 {
+  color: var(--text-primary);
+  font-weight: 800;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.01em;
+}
+
+.prose ul {
+  list-style-type: disc;
+  margin-left: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.prose li {
+  margin-bottom: 0.25rem;
+}
+
+.prose p {
+  margin-bottom: 1rem;
+}

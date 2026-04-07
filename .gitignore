@@ -1,0 +1,38 @@
+# Python Virtual Environments (CRITICAL)
+venv/
+.venv/
+backend/venv/
+backend/.venv/
+
+# Node modules
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Data and Databases (CRITICAL to ignore for Cloud)
+chroma_db/
+backend/chroma_db/
+backend/chroma_db_store/
+backend/feedback.db
+backend/uploads/
+*.sqlite3
+
+# Environment
+.env
+backend/.env
+frontend/.env
+
+# Large Binary Files
+*.pdf
+*.docx
+*.bin
+*.jpg
+*.png
+
+# Logs
+*.log

@@ -54,7 +54,8 @@ async def planner_agent(state: AgentState) -> Dict[str, Any]:
                 {"role": "user", "content": f"Question: {question}"}
             ],
             temperature=0,
-            response_format={"type": "json_object"}
+            response_format={"type": "json_object"},
+            timeout=10.0
         )
         
         # ── Parse response ───────────────────────────────────────────────────

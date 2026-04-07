@@ -7,9 +7,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 
 from app.core.logger import logger
+from app.core.security import get_current_user
 from app.models.schemas import (
     FeedbackRequest, 
     FeedbackResponse,
@@ -21,7 +22,11 @@ from app.services.feedback_store import feedback_store
 from app.services.evaluator import evaluate_rag_response
 from app.services.self_improver import self_improver
 
-router = APIRouter(prefix="/feedback", tags=["feedback"])
+router = APIRouter(
+    prefix="/feedback", 
+    tags=["feedback"],
+    dependencies=[Depends(get_current_user)]
+)
 
 @router.post("/", response_model=FeedbackResponse)
 async def submit_feedback(request: FeedbackRequest) -> FeedbackResponse:
@@ -52,6 +57,7 @@ async def submit_feedback(request: FeedbackRequest) -> FeedbackResponse:
         faithfulness=eval_result.faithfulness if eval_result else 0.0,
         relevance=eval_result.relevance if eval_result else 0.0,
         context_precision=eval_result.context_precision if eval_result else 0.0,
+        answer_accuracy=eval_result.answer_accuracy if eval_result else 0.0,
     )
 
     if feedback_id == -1:
@@ -86,6 +92,7 @@ async def get_system_metrics() -> MetricsResponse:
             date=day["date"],
             avg_faithfulness=round(day["avg_faithfulness"] or 0.0, 2),
             avg_relevance=round(day["avg_relevance"] or 0.0, 2),
+            avg_accuracy=round(day["avg_accuracy"] or 0.0, 2),
             total_questions=day["total_questions"] or 0,
             avg_rating=round(day["avg_rating"] or 0.0, 1),
         )
@@ -96,6 +103,7 @@ async def get_system_metrics() -> MetricsResponse:
         total_questions=data["total_questions"],
         avg_faithfulness=data["avg_faithfulness"],
         avg_relevance=data["avg_relevance"],
+        avg_accuracy=data["avg_accuracy"],
         avg_user_rating=data["avg_user_rating"],
         avg_retry_count=data["avg_retry_count"],
         last_updated=datetime.now(),

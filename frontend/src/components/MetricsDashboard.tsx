@@ -1,10 +1,10 @@
 import React from 'react';
 import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  AreaChart, Area, BarChart, Bar, Cell 
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+  AreaChart, Area, BarChart, Bar 
 } from 'recharts';
-import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, Activity, BarChart3, AlertCircle, CheckCircle2, X } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { TrendingUp, Activity, BarChart3, CheckCircle2, X } from 'lucide-react';
 import type { MetricsData, ImprovementsData } from '../types';
 
 interface MetricsDashboardProps {

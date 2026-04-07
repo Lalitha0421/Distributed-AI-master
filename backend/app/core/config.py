@@ -27,6 +27,11 @@ class Settings(BaseSettings):
     groq_api_key: str
     model_name: str = "llama-3.1-8b-instant"
 
+    # ── Security ─────────────────────────────────────────────────────────────
+    secret_key: str = "super-secret-key-change-this-in-env"
+    admin_password: str = "admin123"
+    access_token_expire_minutes: int = 60 * 24 * 7 # 1 week
+    
     # ── App ───────────────────────────────────────────────────────────────────
     app_name: str = "AI Knowledge Assistant"
     app_version: str = "2.0.0"
@@ -74,7 +79,17 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5173",
         "http://localhost:8000",
         "http://localhost:3000",
+        "http://localhost",
     ]
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Allow adding extra origins via ENV like CORS_EXTRA="https://myapp.com,https://test.net"
+        import os
+        extra = os.getenv("CORS_EXTRA")
+        if extra:
+            origins = [o.strip() for o in extra.split(",") if o.strip()]
+            self.cors_origins.extend(origins)
 
 
 @lru_cache(maxsize=1)

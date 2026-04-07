@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import type { Message } from '../types';
 
 interface ChatAreaProps {
@@ -82,8 +84,14 @@ const ChatArea: React.FC<ChatAreaProps> = ({ messages, isStreaming, onAsk, onSto
                       <span className="text-xs font-bold uppercase tracking-wider text-[var(--accent-secondary)]">Search Result</span>
                     </div>
 
-                    <div className="prose prose-invert max-w-none text-sm leading-relaxed whitespace-pre-wrap">
-                      {msg.content || (msg.isStreaming && <div className="w-1.5 h-4 bg-[var(--accent-secondary)] animate-pulse inline-block" />)}
+                    <div className="prose prose-invert max-w-none text-sm leading-relaxed">
+                      {msg.content ? (
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {msg.content}
+                        </ReactMarkdown>
+                      ) : (
+                        msg.isStreaming && <div className="w-1.5 h-4 bg-[var(--accent-secondary)] animate-pulse inline-block" />
+                      )}
                     </div>
 
                     {/* Sources Expansion */}

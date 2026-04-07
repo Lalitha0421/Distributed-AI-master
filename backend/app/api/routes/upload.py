@@ -10,17 +10,22 @@ import shutil
 from typing import List
 from datetime import datetime
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, HTTPException, UploadFile, Depends
 
 from app.core.config import settings
 from app.core.logger import logger
+from app.core.security import get_current_user
 from app.models.schemas import UploadResponse
 from app.services.document_processor import extract_text_from_file
 from app.services.text_chunker import split_text_into_chunks
 from app.services.vector_store import store_chunks
 from starlette.concurrency import run_in_threadpool
 
-router = APIRouter(prefix="/upload", tags=["upload"])
+router = APIRouter(
+    prefix="/upload", 
+    tags=["upload"],
+    dependencies=[Depends(get_current_user)]
+)
 
 _ALLOWED_EXTENSIONS = {".pdf", ".txt", ".docx", ".md"}
 
@@ -118,3 +123,28 @@ async def delete_document_route(filename: str):
     v_success = delete_document(filename)
     
     return {"message": f"Successfully deleted {filename}", "vector_store": v_success}
+
+@router.post("/sync")
+async def sync_knowledge_base():
+    """
+    Scans the upload directory and the vector store.
+    Removes any database entries that don't have a corresponding file on disk.
+    """
+    from app.services.vector_store import prune_orphans
+    
+    # Get all actual files on disk
+    if not os.path.exists(settings.upload_dir):
+        return {"message": "Upload directory empty", "pruned": 0}
+        
+    actual_files = [
+        f for f in os.listdir(settings.upload_dir)
+        if os.path.isfile(os.path.join(settings.upload_dir, f))
+    ]
+    
+    pruned_count = prune_orphans(actual_files)
+    
+    return {
+        "message": f"Sync complete. Removed {pruned_count} orphan(s).",
+        "pruned": pruned_count,
+        "files_on_disk": len(actual_files)
+    }

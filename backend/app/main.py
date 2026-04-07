@@ -36,7 +36,10 @@ app.add_middleware(
     expose_headers=["X-Request-ID"],
 )
 
+from app.api.routes.auth import router as auth_router
+
 # ── Routers ───────────────────────────────────────────────────────────────────
+app.include_router(auth_router, prefix="/api")
 app.include_router(upload_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
 app.include_router(feedback_router, prefix="/api")

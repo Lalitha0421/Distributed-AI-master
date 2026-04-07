@@ -7,7 +7,7 @@ import { useState, useCallback, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Message, AgentTraceStep, ChunkResult } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : (import.meta.env.VITE_API_URL.endsWith('/') ? `${import.meta.env.VITE_API_URL}api` : `${import.meta.env.VITE_API_URL}/api`)) : 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
 export const useAgentStream = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -15,7 +15,12 @@ export const useAgentStream = () => {
   const [currentTrace, setCurrentTrace] = useState<AgentTraceStep[]>([]);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const askQuestion = useCallback(async (question: string, sessionId: string = 'default', source?: string) => {
+  const askQuestion = useCallback(async (
+    question: string, 
+    sessionId: string = 'default', 
+    source?: string,
+    onFinish?: () => void
+  ) => {
     if (!question.trim() || isStreaming) return;
 
     // Reset current trace and setup abort controller
@@ -45,9 +50,13 @@ export const useAgentStream = () => {
     setMessages(prev => [...prev, userMsg, assistantMsg]);
 
     try {
+      const token = localStorage.getItem('access_token');
       const response = await fetch(`${API_BASE_URL}/ask/?session_id=${sessionId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
         body: JSON.stringify({ question, source }),
         signal: abortControllerRef.current.signal
       });
@@ -125,6 +134,7 @@ export const useAgentStream = () => {
       ));
     } finally {
       setIsStreaming(false);
+      if (onFinish) onFinish();
     }
   }, [isStreaming]);
 

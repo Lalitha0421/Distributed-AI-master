@@ -23,7 +23,7 @@ METRICS:
 1. FAITHFULNESS: Is every claim in the answer backed by the context provided? If the answer hallucinates info not in context, score low.
 2. RELEVANCE: Does the answer directly and accurately address the user's question?
 3. CONTEXT_PRECISION: Are the retrieved document chunks actually relevant and useful for answering the question?
-4. ANSWER_ACCURACY (if GROUND TRUTH provided): How similar is the answer to the GROUND TRUTH?
+4. ANSWER_ACCURACY: If GROUND TRUTH provided, score similarity. IF NOT, score based on completeness and technical depth (did it answer all parts of the question?).
 
 OUTPUT FORMAT: Return ONLY a valid JSON object.
 
@@ -81,6 +81,9 @@ async def evaluate_rag_response(
             temperature=0.0,
             response_format={"type": "json_object"}
         )
+
+        data_str = response.choices[0].message.content
+        data = json.loads(data_str) if data_str else {}
 
         # Robust extraction with type enforcement (handles null values from LLM)
         def _get_float(key: str) -> float:

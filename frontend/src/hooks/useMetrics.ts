@@ -7,7 +7,7 @@ import { useState, useCallback, useEffect } from 'react';
 import axios from 'axios';
 import type { MetricsData, ImprovementsData } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : (import.meta.env.VITE_API_URL.endsWith('/') ? `${import.meta.env.VITE_API_URL}api` : `${import.meta.env.VITE_API_URL}/api`)) : 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
 export const useMetrics = () => {
   const [metrics, setMetrics] = useState<MetricsData | null>(null);
@@ -16,11 +16,14 @@ export const useMetrics = () => {
 
   // 1. Fetch overall metrics ──────────────────────────────────────────────────
   const fetchMetrics = useCallback(async () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) return;
+
     setIsLoading(true);
     try {
       const [metricsRes, improvementsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/feedback/metrics`),
-        axios.get(`${API_BASE_URL}/feedback/improvements`)
+        axios.get(`${API_BASE_URL}/feedback/metrics`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_BASE_URL}/feedback/improvements`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
       setMetrics(metricsRes.data);
       setImprovements(improvementsRes.data);

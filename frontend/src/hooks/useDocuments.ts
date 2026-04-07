@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import type { DocumentInfo } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : (import.meta.env.VITE_API_URL.endsWith('/') ? `${import.meta.env.VITE_API_URL}api` : `${import.meta.env.VITE_API_URL}/api`)) : 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
 export const useDocuments = () => {
   const [documents, setDocuments] = useState<DocumentInfo[]>([]);
@@ -16,9 +16,15 @@ export const useDocuments = () => {
 
   // 1. Fetch document list ───────────────────────────────────────────────────
   const fetchDocuments = useCallback(async () => {
+    // Only fetch if authenticated (to prevent 401 log spam)
+    if (!localStorage.getItem('access_token')) return;
+    
     setIsLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/upload/list`);
+      const token = localStorage.getItem('access_token');
+      const response = await axios.get(`${API_BASE_URL}/upload/list`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setDocuments(response.data.documents || []);
     } catch (err) {
       console.error("Failed to fetch documents:", err);
@@ -76,5 +82,21 @@ export const useDocuments = () => {
     }
   }, [fetchDocuments]);
 
-  return { documents, isLoading, isUploading, uploadDocuments, deleteDocument, refresh: fetchDocuments };
+  // 4. Sync documents ────────────────────────────────────────────────────────
+  const syncDocuments = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('access_token');
+      await axios.post(`${API_BASE_URL}/upload/sync`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      await fetchDocuments();
+    } catch (err) {
+      console.error("Sync failed:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchDocuments]);
+
+  return { documents, isLoading, isUploading, uploadDocuments, deleteDocument, syncDocuments, refresh: fetchDocuments };
 };

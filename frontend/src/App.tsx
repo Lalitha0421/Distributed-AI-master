@@ -10,6 +10,7 @@ import ChatArea from './components/ChatArea';
 import DocumentSidebar from './components/DocumentSidebar';
 import AgentTracePanel from './components/AgentTracePanel';
 import MetricsDashboard from './components/MetricsDashboard';
+import Login from './components/Login';
 import { AnimatePresence } from 'framer-motion';
 
 // ── Hooks ───────────────────────────────────────────────────────────────────
@@ -20,6 +21,14 @@ import { useMetrics } from './hooks/useMetrics';
 const App: React.FC = () => {
   const [selectedDoc, setSelectedDoc] = React.useState<string | null>(null);
   const [isDashboardOpen, setIsDashboardOpen] = React.useState(false);
+  const [isAuthenticated, setIsAuthenticated] = React.useState(!!localStorage.getItem('access_token'));
+
+  const handleLoginSuccess = (token: string) => {
+    localStorage.setItem('access_token', token);
+    setIsAuthenticated(true);
+    // Reload metrics when user logs in
+    refreshMetrics();
+  };
 
   // Logic hooks
   const { 
@@ -34,20 +43,25 @@ const App: React.FC = () => {
     documents, 
     isUploading, 
     uploadDocuments,
-    deleteDocument 
+    deleteDocument,
+    syncDocuments 
   } = useDocuments();
   
   const { 
     metrics, 
     improvements,
-    submitFeedback 
+    submitFeedback,
+    refresh: refreshMetrics
   } = useMetrics();
 
   // Handlers
   const handleAsk = useCallback((question: string) => {
     // Pass the selected document as the source filter
-    askQuestion(question, 'default', selectedDoc || undefined);
-  }, [askQuestion, selectedDoc]);
+    askQuestion(question, 'default', selectedDoc || undefined, () => {
+      // Small delay to allow background eval on server to start/finish
+      setTimeout(refreshMetrics, 3000);
+    });
+  }, [askQuestion, selectedDoc, refreshMetrics]);
 
   const handleUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -73,6 +87,10 @@ const App: React.FC = () => {
     );
   }, [messages, submitFeedback]);
 
+  if (!isAuthenticated) {
+    return <Login onLoginSuccess={handleLoginSuccess} />;
+  }
+
   return (
     <div className="layout-container bg-[#080c14] overflow-hidden">
       {/* ── Left Panel: Sidebar & Metrics ────────────────────────────────────── */}
@@ -82,6 +100,7 @@ const App: React.FC = () => {
         improvements={improvements}
         onUpload={handleUpload}
         onDelete={deleteDocument}
+        onSync={syncDocuments}
         isUploading={isUploading}
         selectedDoc={selectedDoc}
         onSelectDoc={setSelectedDoc}

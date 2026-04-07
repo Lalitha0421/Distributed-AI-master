@@ -164,3 +164,31 @@ def delete_document(document_name: str) -> bool:
     except Exception as e:
         logger.error(f"Failed to delete document from vector store: {e}")
         return False
+
+def prune_orphans(valid_filenames: List[str]) -> int:
+    """
+    Removes any chunks from the vector store whose 'source' is not in valid_filenames.
+    Returns the number of orphan sources removed.
+    """
+    try:
+        collection = _get_main_collection()
+        
+        # Get unique sources from the vector store
+        results = collection.get(include=["metadatas"])
+        metadatas = results.get("metadatas", [])
+        
+        stored_sources = set()
+        for m in metadatas:
+            if m and "source" in m:
+                stored_sources.add(m["source"])
+        
+        orphans = [src for src in stored_sources if src not in valid_filenames]
+        
+        for orphan in orphans:
+            collection.delete(where={"source": orphan})
+            logger.info(f"Pruned orphan document from vector store: {orphan}")
+            
+        return len(orphans)
+    except Exception as e:
+        logger.error(f"Failed to prune orphans: {e}")
+        return 0

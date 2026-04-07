@@ -12,6 +12,18 @@ from pydantic import BaseModel, Field
 
 
 # ──────────────────────────────────────────────
+# Authentication
+# ──────────────────────────────────────────────
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+# ──────────────────────────────────────────────
 # Upload
 # ──────────────────────────────────────────────
 
@@ -115,6 +127,7 @@ class DailyMetric(BaseModel):
     date: str                           # ISO date string e.g. "2026-03-31"
     avg_faithfulness: float
     avg_relevance: float
+    avg_accuracy: float                 # 0.0 to 1.0
     total_questions: int
     avg_rating: float                   # 1.0 to 5.0
 
@@ -124,6 +137,7 @@ class MetricsResponse(BaseModel):
     total_questions: int
     avg_faithfulness: float
     avg_relevance: float
+    avg_accuracy: float
     avg_user_rating: float              # 1.0 to 5.0 overall
     avg_retry_count: float
     last_updated: Optional[datetime] = None

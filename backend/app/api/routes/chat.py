@@ -17,24 +17,53 @@ from __future__ import annotations
 
 import json
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
 from fastapi.responses import StreamingResponse
 
 from app.core.logger import logger
+from app.core.security import get_current_user
 from app.models.schemas import QuestionRequest
 from app.services.hybrid_search import hybrid_search
 from app.services.llm_service import generate_answer_stream
 from app.services.memory import add_message, get_history
 from app.services.query_rewriter import rewrite_query
 from app.services.reranker import rerank
+from app.services.evaluator import evaluate_rag_response
+from app.services.feedback_store import feedback_store
 
 from app.agents.graph import knowledge_graph
 
-router = APIRouter(prefix="/ask", tags=["chat"])
+router = APIRouter(
+    prefix="/ask", 
+    tags=["ask"],
+    dependencies=[Depends(get_current_user)]
+)
+
+async def _bg_evaluate(session_id: str, question: str, answer: str, context: str, retry_count: int):
+    """Run evaluation in the background and save to metrics store."""
+    try:
+        eval_result = await evaluate_rag_response(
+            question=question,
+            answer=answer,
+            context=context
+        )
+        feedback_store.save_feedback(
+            session_id=session_id,
+            question=question,
+            answer=answer,
+            rating=0, # Auto-evaluated (no user rating yet)
+            faithfulness=eval_result.faithfulness if eval_result else 0.0,
+            relevance=eval_result.relevance if eval_result else 0.0,
+            context_precision=eval_result.context_precision if eval_result else 0.0,
+            retry_count=retry_count
+        )
+    except Exception as e:
+        logger.error(f"Background evaluation failed: {e}")
 
 @router.post("/")
 async def ask_question(
     request: QuestionRequest,
+    background_tasks: BackgroundTasks,
     session_id: str = "default",
     source: str | None = None,
 ) -> StreamingResponse:
@@ -99,6 +128,17 @@ async def ask_question(
                 {"source": s} for s in final_state.get("sources", [])
             ]
             yield f"data: [SOURCES]{json.dumps(sources)}\n\n"
+
+            # ── Background Evaluation ──────────────────────────────────────────
+            context_str = final_state.get("context", "No context retrieved.")
+            background_tasks.add_task(
+                _bg_evaluate, 
+                session_id, 
+                question, 
+                final_state["answer"], 
+                context_str, 
+                final_state.get("retry_count", 0)
+            )
 
         yield "data: [DONE]\n\n"
         logger.info(f"Graph execution complete for session={session_id}")

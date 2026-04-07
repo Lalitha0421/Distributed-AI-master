@@ -1,14 +1,13 @@
-version: '3.9'
-
 services:
   backend:
     build:
       context: ./backend
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     volumes:
-      - ./backend/app:/app/app
-      - ./backend/chroma_db:/app/chroma_db
+      # Data persistence across restarts
+      - chroma_data:/app/chroma_db
       - ./backend/feedback.db:/app/feedback.db
       - ./backend/uploads:/app/uploads
     env_file:
@@ -16,23 +15,27 @@ services:
     environment:
       - HF_HUB_OFFLINE=1
       - TRANSFORMERS_OFFLINE=1
+      - CORS_EXTRA=http://localhost,http://127.0.0.1
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/upload/list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     restart: unless-stopped
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    # Use production server settings (no --reload)
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
 
   frontend:
     build:
       context: ./frontend
+      dockerfile: Dockerfile
     ports:
       - "80:80"
     depends_on:
       backend:
         condition: service_healthy
-    environment:
-      - VITE_API_URL=http://localhost:8000/api
     restart: unless-stopped
+
+volumes:
+  chroma_data:

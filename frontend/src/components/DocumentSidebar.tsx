@@ -7,6 +7,7 @@ interface DocumentSidebarProps {
   improvements: ImprovementsData | null;
   onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onDelete: (filename: string) => void;
+  onSync: () => void;
   isUploading: boolean;
   selectedDoc: string | null;
   onSelectDoc: (filename: string | null) => void;
@@ -19,6 +20,7 @@ const DocumentSidebar: React.FC<DocumentSidebarProps> = ({
   improvements,
   onUpload, 
   onDelete,
+  onSync,
   isUploading,
   selectedDoc,
   onSelectDoc,
@@ -39,9 +41,18 @@ const DocumentSidebar: React.FC<DocumentSidebarProps> = ({
         {/* Documents Section */}
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider">
-              Documents
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+                Documents
+              </h3>
+              <button 
+                onClick={onSync}
+                className="p-1 rounded hover:bg-white/10 text-[var(--text-dim)] hover:text-[var(--accent-secondary)] transition-all"
+                title="Sync with filesystem"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+              </button>
+            </div>
             <label className="cursor-pointer group">
               <input type="file" className="hidden" onChange={onUpload} accept=".pdf,.docx,.txt,.md" multiple />
               <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-[var(--bg-glass-heavy)] border border-[var(--border)] group-hover:bg-[var(--accent-primary)] group-hover:text-white transition-all text-xs">

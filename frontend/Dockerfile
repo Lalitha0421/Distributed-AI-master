@@ -17,9 +17,10 @@ FROM nginx:stable-alpine
 # Copy the build output to Nginx's default public directory
 COPY --from=builder /app/dist /usr/share/nginx/html
 
+# Copy custom Nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 # Expose the standard HTTP port
 EXPOSE 80
 
-# Use a custom Nginx config to handle React Router if needed
-# (Optional: If you add routing later, we can add a custom nginx.conf)
 CMD ["nginx", "-g", "daemon off;"]
